@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(mobile_manipulator_motion_planner CXX)
+project(mobile_manipulator_motion_planner_robocare CXX)
 
 add_compile_options(-std=c++11)
 
@@ -19,6 +19,7 @@ INCLUDE(CMake/FindRBDL.cmake)
 find_package (Boost REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(RBDL REQUIRED)
+
 catkin_package(
   CATKIN_DEPENDS
     kdl_parser
@@ -32,7 +33,7 @@ set(SRCS
     src/util.cpp
     src/ROS_bridge.cpp
 	  src/NHRRT_planner.cpp
-     )
+)
 
 set(HEADS
     include/Controller.h
@@ -49,6 +50,7 @@ add_library(mobile_manipulator_controller
   ${SRCS} 
   ${HEADS}
 )
+
 
 include_directories(
   include

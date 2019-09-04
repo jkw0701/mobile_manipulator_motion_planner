@@ -69,10 +69,10 @@ int main(int argc, char** argv)
 			/* Non-holonomic RRT */
 			case 'm':
 				cout << "Move mobile robot" << endl;
-				ac.setMode(Controller::MOVE_MOBILE1);
+				ac.setMode(Controller::MOVE_MOBILE);
 				break;
 			case 'n':
-				cout << "Move mobile robot" << endl;
+				cout << "Move mobile robot to table" << endl;
 				ac.setMode(Controller::MOVE_MOBILE2);
 				break;
 			/* BiRRT */
@@ -84,6 +84,10 @@ int main(int argc, char** argv)
 				cout << "Moving Cup" << endl;
 				ac.setMode(Controller::MOVE_CUP);
 				break;
+			case 't':
+				cout << "Moving Cup2" << endl;
+				ac.setMode(Controller::MOVE_CUP_TABLE);
+				break;
 			case 's':
 				cout << "Reaching Milk" << endl;
 				ac.setMode(Controller::REACH_MILK);
@@ -94,7 +98,14 @@ int main(int argc, char** argv)
 				break;
 			case 'g':
 				cout << "Grasping Milk" << endl;
-				rb.desired_grasping_l = 0.02;
+				rb.desired_grasping_r(0) = 0.0/180.0*M_PI;
+				rb.desired_grasping_r(1) = 0.0/180.0*M_PI;
+				rb.desired_grasping_r(2) = -0.0/180.0*M_PI;
+
+				break;
+			case 'h':
+				cout << "Grasping Milk" << endl;
+			//	rb.desired_grasping_l = 0.04;
 				break;
 			case '\t':
 				if (isSimulationRun) {

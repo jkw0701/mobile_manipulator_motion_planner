@@ -16,6 +16,7 @@ static const int DoF = 7;
 #define q_Max  180.0
 
 bool rrt::StartRRT(Robotmodel& model, std::ostream& sout) {
+
 	_model = model;
 
 	tree._nodes.clear(); // NodeTree
@@ -23,7 +24,6 @@ bool rrt::StartRRT(Robotmodel& model, std::ostream& sout) {
 	goal.clear(); // std::vector<double>
 	start.clear();// std::vector<double>
 	DOF_weights.clear();// std::vector<double>
-
 	int ActiveDoFs = dof;
 	step_size = 0.5;
 	std::string start_string[DoF];
@@ -158,8 +158,8 @@ bool rrt::StartCRRT(Robotmodel& model, std::ostream& sout) {
             q_b_reached = this->ConstrainedExtend(q_a_reached, q_b_near);   // near��� ���� random config�� Extend
             if (std_norm(q_a_reached, q_b_reached, dof) < step_size)
             {
-                cout << std_norm(q_a_reached, q_b_reached, dof)  << endl;
-                cout <<"reached" << endl;
+                //cout << std_norm(q_a_reached, q_b_reached, dof)  << endl;
+            //    cout <<"reached" << endl;
                 a = REACHED;
             }
         }
@@ -197,7 +197,7 @@ bool rrt::StartCRRT(Robotmodel& model, std::ostream& sout) {
 }
 std::vector<double> rrt::RandomConfig() {
 	double goalb = (double)rand() / RAND_MAX;
-	if (goalb < 0.5) {
+	if (goalb < 0.2) {
 		isGoal = true;
 		return g2;
 	} 
@@ -253,7 +253,6 @@ int rrt::Extend(std::vector<double> &node, RRTNode* &near) {
 	check = CheckCollision(_model, qnew);
 	if (!check) {
 		RRTNode *old = near;
-
 		near = (new RRTNode(qnew, old));
 		c_tree->addNode(*near);
 		return ADVANCED; // 'near' extend 'qnew'
@@ -298,6 +297,8 @@ std::vector<double> rrt::ConstrainedExtend(std::vector<double> &node, RRTNode* &
 			return qs_old;
 		}
 
+
+
 		for (int i = 0; i< goal.size(); i++)
 			qs[i] = (qs[i] + min(step_size, std_norm(node, qs, dof)) * (node[i]-qs[i]) / std_norm(node, qs, dof));
 
@@ -310,13 +311,13 @@ std::vector<double> rrt::ConstrainedExtend(std::vector<double> &node, RRTNode* &
         {
             // for (int i=0;i<dof;i++)
             // cout << qs[i] << "\t"
-
             // <<endl;
             RRTNode *old = near;           //qs_old
             near = (new RRTNode(qs, old)); //
             c_tree->addNode(*near);
             qs_old = qs;
-			iteration_ ++;
+						iteration_ ++;
+
             // cout << "project ok" << endl;
             // return qs_old;
         }
@@ -362,7 +363,7 @@ std::vector<double> rrt::ProjectConfig(Robotmodel model, std::vector<double> qol
 		for (int i = 0; i < dof; i++)
 			model.q(i) = qs[i];
 
-		Matrix3d Rot_temp = model.Rot*Rot_arm(model.q);
+		Matrix3d Rot_temp = CalcBodyWorldOrientation(*model.model, model.q, model.body_id[dof-1], true ).transpose();
 		Vector3d pos_temp = CalcBodyToBaseCoordinates(*model.model, model.q, model.body_id[dof-1], model.com_id[dof-1] ); // get position and rotation in EE frame;
 
 		T0_obj.setIdentity();
@@ -437,7 +438,6 @@ std::vector<double> rrt::ProjectConfig(Robotmodel model, std::vector<double> qol
 		// Algorithm 4 - line 7 : stuck here
 		if (!OutsideJointLimit(qs)) {
             qs.clear();
-         //   cout << "empty" << endl;
 			return qs;
             // flag = false;
 			// break;
@@ -551,62 +551,52 @@ bool rrt::CheckCollision(Robotmodel model, std::vector<double> &config) {
 		model.q(i) = config[i] * M_PI / 180.0;
 
 	if (!left) {
-		Matrix3d Rot_temp = model.Rot*Rot_arm(model.q);// end-effector
-		Box2[0].vAxis[0] = Rot_temp.col(0);
-		Box2[0].vAxis[1] = Rot_temp.col(1);
-		Box2[0].vAxis[2] = Rot_temp.col(2);
-		Box2[0].fAxis = Vector3d(0.03, 0.07, 0.1);
-		Box2[0].vPos = CalcBodyToBaseCoordinates(*model.model, model.q, model.body_id[dof-1], model.com_id[dof-1] , true);
+		Matrix3d Rot_temp = CalcBodyWorldOrientation(*model.model, model.q, model.body_id[dof-1], true ).transpose();// end-effector
+		Box2[2].vAxis[0] = Rot_temp.col(0);
+		Box2[2].vAxis[1] = Rot_temp.col(1);
+		Box2[2].vAxis[2] = Rot_temp.col(2);
+		Box2[2].fAxis = Vector3d(0.04, 0.04, 0.04);
+		Box2[2].vPos = CalcBodyToBaseCoordinates(*model.model, model.q, model.body_id[dof-1], model.com_id[dof-1] , true);
 
-		Matrix3d Rot_temp2 = model.Rot*Rot_arm_link5(model.q); // link 5
+		Matrix3d Rot_temp2 = CalcBodyWorldOrientation(*model.model, model.q, model.body_id[4], true ).transpose();
 		Box2[1].vAxis[0] = Rot_temp2.col(0);
 		Box2[1].vAxis[1] = Rot_temp2.col(1);
 		Box2[1].vAxis[2] = Rot_temp2.col(2);
-		Box2[1].fAxis = Vector3d(0.05, 0.05, 0.10);
+		Box2[1].fAxis = Vector3d(0.04, 0.1, 0.04);
 		Box2[1].vPos = CalcBodyToBaseCoordinates(*model.model, model.q, model.body_id[4], model.com_id[4], true);
 
-		Matrix3d Rot_temp3 = model.Rot*Rot_arm_link2(model.q); // link 2
-		Box2[2].vAxis[0] = Rot_temp3.col(0);
-		Box2[2].vAxis[1] = Rot_temp3.col(1);
-		Box2[2].vAxis[2] = Rot_temp3.col(2);
-		Box2[2].fAxis = Vector3d(0.05, 0.05, 0.10);
-		Box2[2].vPos = CalcBodyToBaseCoordinates(*model.model, model.q, model.body_id[1], model.com_id[1], true);
+		Matrix3d Rot_temp3 = CalcBodyWorldOrientation(*model.model, model.q, model.body_id[2], true ).transpose();
+		Box2[0].vAxis[0] = Rot_temp3.col(0);
+		Box2[0].vAxis[1] = Rot_temp3.col(1);
+		Box2[0].vAxis[2] = Rot_temp3.col(2);
+		Box2[0].fAxis = Vector3d(0.04, 0.1, 0.04);
+		Box2[0].vPos = CalcBodyToBaseCoordinates(*model.model, model.q, model.body_id[2], model.com_id[2], true);
 
-		// Box2[3].vAxis[0] = Rot_temp.col(0);
-		// Box2[3].vAxis[1] = Rot_temp.col(1);
-		// Box2[3].vAxis[2] = Rot_temp.col(2);
-		// Box2[3].fAxis = Vector3d(0.03, 0.03, 0.05);
-		// Box2[3].vPos = CalcBodyToBaseCoordinates(*model.model, model.q, model.body_id[6], model.com_id[dof], true);
 
 
 	}
 	else {
-			Matrix3d Rot_temp = model.Rot*Rot_arm(model.q);// end-effector
-		Box2[0].vAxis[0] = Rot_temp.col(0);
-		Box2[0].vAxis[1] = Rot_temp.col(1);
-		Box2[0].vAxis[2] = Rot_temp.col(2);
-		Box2[0].fAxis = Vector3d(0.03, 0.07, 0.1);
-		Box2[0].vPos = CalcBodyToBaseCoordinates(*model.model, model.q, model.body_id[dof-1], model.com_id[dof-1] , true);
+		Matrix3d Rot_temp = CalcBodyWorldOrientation(*model.model, model.q, model.body_id[dof-1], true ).transpose();// end-effector
+		Box2[2].vAxis[0] = Rot_temp.col(0);
+		Box2[2].vAxis[1] = Rot_temp.col(1);
+		Box2[2].vAxis[2] = Rot_temp.col(2);
+		Box2[2].fAxis = Vector3d(0.025, 0.025, 0.025);
+		Box2[2].vPos = CalcBodyToBaseCoordinates(*model.model, model.q, model.body_id[dof-1], model.com_id[dof-1] , true);
 
-		Matrix3d Rot_temp2 = model.Rot*Rot_arm_link5(model.q); // link 5
+		Matrix3d Rot_temp2 = CalcBodyWorldOrientation(*model.model, model.q, model.body_id[4], true ).transpose();
 		Box2[1].vAxis[0] = Rot_temp2.col(0);
 		Box2[1].vAxis[1] = Rot_temp2.col(1);
 		Box2[1].vAxis[2] = Rot_temp2.col(2);
-		Box2[1].fAxis = Vector3d(0.05, 0.05, 0.10);
+		Box2[1].fAxis = Vector3d(0.04, 0.1, 0.04);
 		Box2[1].vPos = CalcBodyToBaseCoordinates(*model.model, model.q, model.body_id[4], model.com_id[4], true);
 
-		Matrix3d Rot_temp3 = model.Rot*Rot_arm_link2(model.q); // link 2
-		Box2[2].vAxis[0] = Rot_temp3.col(0);
-		Box2[2].vAxis[1] = Rot_temp3.col(1);
-		Box2[2].vAxis[2] = Rot_temp3.col(2);
-		Box2[2].fAxis = Vector3d(0.05, 0.05, 0.10);
-		Box2[2].vPos = CalcBodyToBaseCoordinates(*model.model, model.q, model.body_id[1], model.com_id[1], true);
+		Matrix3d Rot_temp3 = CalcBodyWorldOrientation(*model.model, model.q, model.body_id[2], true ).transpose();
+		Box2[0].vAxis[0] = Rot_temp3.col(0);
+		Box2[0].vAxis[1] = Rot_temp3.col(1);
+		Box2[0].vAxis[2] = Rot_temp3.col(2);
+		Box2[0].fAxis = Vector3d(0.04, 0.1, 0.04);
+		Box2[0].vPos = CalcBodyToBaseCoordinates(*model.model, model.q, model.body_id[2], model.com_id[2], true);
 
-		Box2[3].vAxis[0] = Rot_temp.col(0);
-		Box2[3].vAxis[1] = Rot_temp.col(1);
-		Box2[3].vAxis[2] = Rot_temp.col(2);
-		Box2[3].fAxis = Vector3d(0.03, 0.03, 0.05);
-		Box2[3].vPos = CalcBodyToBaseCoordinates(*model.model, model.q, model.body_id[6], model.com_id[dof], true);
 
 
 	}

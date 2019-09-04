@@ -8,7 +8,7 @@
 using namespace std;
 using namespace Eigen;
 static const long MAX_TIME = 180.0f;
-static const int DoF = 7;
+static const int DoF = 6;
 
 #define REACHED 0
 #define ADVANCED 1
@@ -399,7 +399,7 @@ bool rrt::ProjectConfig(Robotmodel model, std::vector<double> qold, std::vector<
 
 
 		// Algorithm 4 - line 3
-		if (dx.norm() < 0.001) {
+		if (dx.norm() < 0.05) {
 		//	cout << d_c.transpose() << endl;
 		//			cout << dx.transpose() << endl;
 	//		cout << "pos" << pos_temp.transpose() << endl;

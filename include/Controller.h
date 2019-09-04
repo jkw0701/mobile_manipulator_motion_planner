@@ -28,11 +28,12 @@ public:
 	enum CONTROL_MODE
 	{
 		INIT,
-		MOVE_MOBILE1,
+		MOVE_MOBILE,
 		MOVE_MOBILE2,
 		REACH_CUP,
 		REACH_MILK,
 		MOVE_CUP,
+		MOVE_CUP_TABLE,
 		MOVE_MILK,
 		GRASP,
 		RELEASE,
@@ -86,34 +87,6 @@ public:
 	};
 
 
-	struct taskState {
-		Vector3d xInit_;
-		Vector3d x_;
-		Vector3d x_des_;
-		Vector3d x_cubic_;
-		Vector3d x_prev_;
-		VectorXd x_dot;
-		VectorXd x_dotd;
-		VectorXd x_error;
-
-		Matrix3d rot_;
-		Matrix3d rotInit_;
-		Vector3d phi_;
-
-		VectorXd xdot_; // 6d
-		VectorXd x_error_; // 6d
-		VectorXd torque_;
-		MatrixXd J_;
-		MatrixXd J_inv_;
-		MatrixXd JT_;
-		MatrixXd lambda_;
-		MatrixXd lambda_inv_;
-
-		MatrixXd A_;
-		MatrixXd A_inv_;
-		MatrixXd Lambda_;
-	};
-
 	struct jointTarget {
 		VectorXd q_;
 		VectorXd cubic_q_;
@@ -126,7 +99,11 @@ public:
 	Matrix6d Rot_l_tot;
 	Matrix6d Rot_r_tot;
 
-
+	Trajectory *Traj_;
+	double duration_;
+	VectorXd maxAcceleration;
+	VectorXd maxVelocity;
+	list<VectorXd> waypoints;
 
 	//// RBDL ////
 	double mass_[dof];
@@ -159,7 +136,6 @@ public:
 
 
 	jointState joint_left_, joint_right_;
-	taskState task_left_, task_right_;
 	jointTarget joint_target_left_, joint_target_right_;
 	JointLimit joint_limit_left_, joint_limit_right_;
 	baseState base_;
@@ -177,7 +153,7 @@ public:
 	NH_RRT _nh_rrt;
 
 	Robotmodel _robot_left, _robot_right;
-	int target_num, target_state;
+	int target_num, target_num_base, target_state;
 	MatrixXd _joint_target, _joint_target2;
 	MatrixXd target_1;
 

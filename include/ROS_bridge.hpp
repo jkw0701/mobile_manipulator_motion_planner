@@ -24,11 +24,11 @@
 #define deg2rad(deg)  ((deg) * PI / 180.0)
 #define rad2deg(rad)  ((rad) * 180.0 / PI)
 
-const std::string R_JOINT_NAME[dof] = {"panda_joint1_r","panda_joint2_r","panda_joint3_r","panda_joint4_r","panda_joint5_r","panda_joint6_r","panda_joint7_r"};
-const std::string R_GRIPPER_NAME[2] = {"panda_finger_joint1_r","panda_finger_joint2_r"};
+const std::string R_JOINT_NAME[dof] = {"Waist_Pitch","RShoulder_Pitch","RShoulder_Roll","RElbow_Pitch","RElbow_Yaw","RWrist_Pitch","RWrist_Roll"};
+const std::string R_GRIPPER_NAME[3] = {"RFinger_1","RFinger_2","RFinger_3"};
 
-const std::string L_JOINT_NAME[dof] = {"panda_joint1_l","panda_joint2_l","panda_joint3_l","panda_joint4_l","panda_joint5_l","panda_joint6_l","panda_joint7_l"};
-const std::string L_GRIPPER_NAME[2] = {"panda_finger_joint1_l","panda_finger_joint2_l"};
+const std::string L_JOINT_NAME[dof] = {"Waist_Pitch","LShoulder_Pitch","LShoulder_Roll","LElbow_Pitch","LElbow_Yaw","LWrist_Pitch","LWrist_Roll"};
+const std::string L_GRIPPER_NAME[3] = {"LFinger_1","LFinger_2","LFinger_3"};
 
 const std::string BASE_JOINT_NAME[4] = {"joint_1", "joint_2", "joint_3", "joint_4"};
 
@@ -62,7 +62,7 @@ const std::string BASE_JOINT_NAME[4] = {"joint_1", "joint_2", "joint_3", "joint_
 	Eigen::VectorXd current_ql_dot_, current_qr_dot_;
 	Eigen::VectorXd desired_ql_, desired_qr_;
 	Eigen::VectorXd target_x_, target_xr_;
-	double desired_grasping_l, desired_grasping_r;
+	Eigen::Vector3d desired_grasping_l, desired_grasping_r;
 
 	Eigen::Vector3d euler_;
 	Eigen::VectorXd desired_base_vel_;

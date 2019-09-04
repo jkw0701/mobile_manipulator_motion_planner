@@ -1,6 +1,9 @@
 #pragma once
 #include "fwd.h"
 #include <rbdl/rbdl.h>
+#include "/home/kendrick/git/trajectory_smoothing/include/Trajectory.h"
+#include "/home/kendrick/git/trajectory_smoothing/include/Path.h"
+
 
 Matrix3d Rotate_with_X(const double rAngle);
 Matrix3d Rotate_with_Y(const double rAngle);

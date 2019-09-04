@@ -28,22 +28,26 @@ ROS_bridge::ROS_bridge(ros::NodeHandle nh_,double hz_):
     ljoint_cmd_.name.resize(dof);
     ljoint_cmd_.position.resize(dof);
 
-    lgripper_cmd_.name.resize(2);
-    lgripper_cmd_.position.resize(2);
+    lgripper_cmd_.name.resize(3);
+    lgripper_cmd_.position.resize(3);
 
     rjoint_cmd_.name.resize(dof);
     rjoint_cmd_.position.resize(dof);
 
-    rgripper_cmd_.name.resize(2);
-    rgripper_cmd_.position.resize(2);
+    rgripper_cmd_.name.resize(3);
+    rgripper_cmd_.position.resize(3);
 
     base_cmd_.name.resize(4);
     base_cmd_.velocity.resize(4);
 
-	// velocity_l = 3.0;
-	// velocity_r = 3.0;
-	desired_grasping_l = 0.1;
-	desired_grasping_r = 0.1;
+  desired_grasping_l(0) = -40.0 * M_PI/180.0;
+  desired_grasping_l(1) = -40.0 * M_PI/180.0;
+  desired_grasping_l(2) = 40.0 * M_PI/180.0;
+
+  desired_grasping_r(0) = -40.0 * M_PI/180.0;
+  desired_grasping_r(1) = -40.0 * M_PI/180.0;
+  desired_grasping_r(2) = 40.0 * M_PI/180.0;
+
 
     for(size_t i=0; i<dof; i++)
     {
@@ -51,7 +55,7 @@ ROS_bridge::ROS_bridge(ros::NodeHandle nh_,double hz_):
 	    rjoint_cmd_.name[i]= R_JOINT_NAME[i];
     }
 
-        for(size_t i=0; i<2; i++)
+        for(size_t i=0; i<3; i++)
     {
       lgripper_cmd_.name[i]= L_GRIPPER_NAME[i];
 	    rgripper_cmd_.name[i]= R_GRIPPER_NAME[i];
@@ -68,16 +72,16 @@ ROS_bridge::ROS_bridge(ros::NodeHandle nh_,double hz_):
     vrep_sim_enable_syncmode_pub_ = nh_.advertise<std_msgs::Bool>("/enableSyncMode", 5);
 
     // Queue_size = 발행하는 메세지를 몇 개까지 저장해 둘 것인지
-    vrep_ljoint_set_pub_ = nh_.advertise<sensor_msgs::JointState>("/panda/left_joint_set", 1);
-    vrep_lgripper_set_pub_ = nh_.advertise<sensor_msgs::JointState>("/panda/left_gripper_joint_set", 1);
+    vrep_ljoint_set_pub_ = nh_.advertise<sensor_msgs::JointState>("/robocare/left_joint_set", 1);
+    vrep_lgripper_set_pub_ = nh_.advertise<sensor_msgs::JointState>("/robocare/left_gripper_joint_set", 1);
 
-    vrep_rjoint_set_pub_ = nh_.advertise<sensor_msgs::JointState>("/panda/right_joint_set", 1);
-    vrep_rgripper_set_pub_ = nh_.advertise<sensor_msgs::JointState>("/panda/right_gripper_joint_set", 1);
+    vrep_rjoint_set_pub_ = nh_.advertise<sensor_msgs::JointState>("/robocare/right_joint_set", 1);
+    vrep_rgripper_set_pub_ = nh_.advertise<sensor_msgs::JointState>("/robocare/right_gripper_joint_set", 1);
 
     vrep_base_set_pub_ = nh_.advertise<sensor_msgs::JointState>("/husky/base_joint_set", 1);
     
-    vrep_ljoint_state_sub_ = nh_.subscribe("/panda/left_joint_states", 100, &ROS_bridge::ljoint_cb, this);
-    vrep_rjoint_state_sub_ = nh_.subscribe("/panda/right_joint_states", 100, &ROS_bridge::rjoint_cb, this);
+    vrep_ljoint_state_sub_ = nh_.subscribe("/robocare/left_joint_states", 100, &ROS_bridge::ljoint_cb, this);
+    vrep_rjoint_state_sub_ = nh_.subscribe("/robocare/right_joint_states", 100, &ROS_bridge::rjoint_cb, this);
     vrep_base_com_state_pub_ = nh_.subscribe("/husky/base_com_states", 100, &ROS_bridge::base_com_cb, this);
 
     vrep_sim_step_done_sub_ = nh_.subscribe("/simulationStepDone", 100, &ROS_bridge::sim_step_done_cb, this);
@@ -101,6 +105,7 @@ ROS_bridge::ROS_bridge(ros::NodeHandle nh_,double hz_):
         current_ql_[i] = msg->position[i];
         current_ql_dot_[i] = msg->velocity[i];        
       }
+    //  cout <<"left" << current_ql_.transpose() << endl;
 }
 
   void ROS_bridge::rjoint_cb(const sensor_msgs::JointStateConstPtr& msg)
@@ -110,6 +115,8 @@ ROS_bridge::ROS_bridge(ros::NodeHandle nh_,double hz_):
       current_qr_[i] = msg->position[i];
       current_qr_dot_[i] = msg->velocity[i];        
     }
+//         cout <<"right" << current_qr_.transpose() << endl;
+
   }
 
   void ROS_bridge::base_com_cb(const geometry_msgs::Pose2DConstPtr &msg)
@@ -133,15 +140,15 @@ ROS_bridge::ROS_bridge(ros::NodeHandle nh_,double hz_):
 
   void ROS_bridge::write_vrep()
   {
-    
+     
     for(size_t i=0;i<dof;i++) {
         ljoint_cmd_.position[i] = desired_ql_(i);
         rjoint_cmd_.position[i] = desired_qr_(i);
     }
 
-   for(size_t i=0;i<2;i++) {
-        lgripper_cmd_.position[i] = desired_grasping_l;
-        rgripper_cmd_.position[i] = desired_grasping_r;
+   for(size_t i=0;i<3;i++) {
+        lgripper_cmd_.position[i] = desired_grasping_l(i);
+        rgripper_cmd_.position[i] = desired_grasping_r(i);
     }
 
     for (size_t i = 0; i<4;i++){
